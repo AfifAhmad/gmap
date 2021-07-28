@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Places Searchbox</title>
+	<script src="../../jquery-3.2.1.js"></script>
+  <link rel="stylesheet" media="all" href="assets/0003.css"/>
+  </head>
+  <body>
+	<div id="map-container">
+	<div>Latitude <input type="text" name="latitude"/></div>
+	<div>longitude <input type="text" name="longitude"/></div>
+	<div></div>
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+    <div id="map"></div>
+	</div>
+    <script>
+      // This example adds a search box to a map, using the Google Place Autocomplete
+      // feature. People can enter geographical searches. The search box will return a
+      // pick list containing a mix of places and predicted search terms.
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      function initAutocomplete() {
+        var map = new google.maps.Map($('#map').get(0), {
+          center: {lat: -2.9869273933348635, lng: 120.76171875},
+          zoom: 4,
+          mapTypeId: 'roadmap'
+        });
+
+        // Create the search box and link it to the UI element.
+        var input = $('#pac-input').get(0);
+        var searchBox = new google.maps.places.SearchBox(input);
+        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        // Bias the SearchBox results towards current map's viewport.
+        map.addListener('bounds_changed', function() {
+          searchBox.setBounds(map.getBounds());
+        });
+		
+		map.addListener("click", function (event) {
+
+			markers.forEach(function(marker) {
+				marker.setMap(null);
+			});
+			markers = [];
+			
+			console.log(event);
+            markers.push(new google.maps.Marker({
+              map: map,
+              title: "Posisi Dipilih",
+              position: event.latLng
+            }));
+			$("#map-container input[name=\"latitude\"]").val(event.latLng.lat());
+			$("#map-container input[name=\"longitude\"]").val(event.latLng.lng());
+		});
+
+        var markers = [];
+        // Listen for the event fired when the user selects a prediction and retrieve
+        // more details for that place.
+        searchBox.addListener('places_changed', function() {
+          var places = searchBox.getPlaces();
+
+          if (places.length == 0) {
+            return;
+          }
+
+          // Clear out the old markers.
+          markers.forEach(function(marker) {
+            marker.setMap(null);
+          });
+          markers = [];
+
+          // For each place, get the icon, name and location.
+          var bounds = new google.maps.LatLngBounds();
+          places.forEach(function(place) {
+            if (!place.geometry) {
+              return;
+            }
+
+			//console.log(place.geometry.location.lat());
+			//console.log(place.geometry.location.lng());
+            // Create a marker for each place.
+            markers.push(new google.maps.Marker({
+              map: map,
+              title: place.name,
+              position: place.geometry.location
+            }));
+
+            if (place.geometry.viewport) {
+              // Only geocodes have viewport.
+              bounds.union(place.geometry.viewport);
+            } else {
+              bounds.extend(place.geometry.location);
+            }
+			
+			$("#map-container input[name=\"latitude\"]").val(place.geometry.location.lat());
+			$("#map-container input[name=\"longitude\"]").val(place.geometry.location.lng());
+          });
+          map.fitBounds(bounds);
+        });
+      }
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBXTSRebxpZzLShtzQ2DUmJAdQsJa9Wg2E&libraries=places&callback=initAutocomplete"
+         async defer></script>
+  </body>
+</html>
